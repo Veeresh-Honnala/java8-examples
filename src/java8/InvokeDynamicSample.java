@@ -5,6 +5,8 @@ import java.io.PrintStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.SwitchPoint;
+import java.util.Random;
 
 /*
 https://www.youtube.com/watch?v=qaf8sHjeQ2g
@@ -61,5 +63,40 @@ public class InvokeDynamicSample {
         MethodHandle objectToUpperCaseMH = toUpperCaseMH.asType(MethodType.methodType(Object.class, Object.class));
         MethodHandle upperCasePrintlnMH = MethodHandles.filterArguments(systemOutPrintMH, 0, objectToUpperCaseMH);
         upperCasePrintlnMH.invokeWithArguments("print in uppercase");
+
+        MethodHandle toLowerCaseMH = LOOKUP.findVirtual(String.class, "toLowerCase", MethodType.methodType(String.class));
+        MethodHandle objectToLowerCaseMH = toLowerCaseMH.asType(MethodType.methodType(Object.class, Object.class));
+        MethodHandle loweCasePrintlnMH = MethodHandles.filterArguments(systemOutPrintMH, 0, objectToLowerCaseMH);
+        loweCasePrintlnMH.invokeWithArguments("PRINT IN Lowercase");
+
+        //random boolean
+        MethodHandle randomBoolean = LOOKUP.findStatic(InvokeDynamicSample.class, "randomBoolean", MethodType.methodType(boolean.class));
+        randomBoolean = MethodHandles.dropArguments(randomBoolean, 0, String.class);
+        MethodHandle updown = MethodHandles.guardWithTest(randomBoolean, toLowerCaseMH, toUpperCaseMH);
+        MethodHandle lowerUpperCasePrinterMH = MethodHandles.filterArguments(systemOutPrintMH, 0, updown.asType(MethodType.methodType(Object.class, Object.class)));
+        lowerUpperCasePrinterMH.invokeWithArguments("Print1");
+        lowerUpperCasePrinterMH.invokeWithArguments("Print1");
+        lowerUpperCasePrinterMH.invokeWithArguments("Print1");
+        lowerUpperCasePrinterMH.invokeWithArguments("Print1");
+        lowerUpperCasePrinterMH.invokeWithArguments("Print1");
+
+        //
+        SwitchPoint switchPoint = new SwitchPoint();
+        MethodHandle switchPointMH = switchPoint.guardWithTest(toLowerCaseMH, toUpperCaseMH);
+        System.out.println(switchPointMH.invoke("Veeresh"));
+        System.out.println(switchPointMH.invoke("Veeresh"));
+
+        switchPointMH.invoke("Veeresh");
+        SwitchPoint.invalidateAll(new SwitchPoint[]{switchPoint});
+        switchPointMH.invoke("Veeresh");
+        System.out.println(switchPointMH.invoke("Veeresh"));
+
+
+    }
+
+    private static final Random RANDOM = new Random(System.currentTimeMillis());
+
+    public static boolean randomBoolean() {
+        return RANDOM.nextBoolean();
     }
 }
